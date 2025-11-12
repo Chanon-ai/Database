@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flights - FlightBook</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">FlightBook</a>
+      <div class="collapse navbar-collapse" id="navMain">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="flights.html">Flights</a></li>
+          <li class="nav-item"><a class="nav-link active" href="bookings.html">Bookings</a></li>
+          <li class="nav-item"><a class="nav-link" href="payment.html">Payment (Mock)</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container py-5">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div>
+        <h2 class="mb-0">Flight search results</h2>
+        <p class="text-muted small mb-0">Choose a flight and proceed to booking</p>
+      </div>
+      <div>
+        <a href="index.html" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+      </div>
+    </div>
+    <div id="results" class="mt-2"></div>
+  </main>
+
+  <footer class="bg-light py-3 mt-auto">
+    <div class="container text-center small">&copy; 2025 FlightBook</div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(location.search);
+      const origin = params.get('origin') || '';
+      const destination = params.get('destination') || '';
+      const date = params.get('date') || '';
+      renderFlightsList({ origin, destination, date });
+    });
+
+    async function renderFlightsList({ origin, destination, date }) {
+      const container = document.getElementById("results");
+      container.innerHTML = `<div class="text-center p-3 text-muted">Loading flights...</div>`;
+
+      try {
+        const query = new URLSearchParams({ origin, destination, date });
+        const res = await fetch(`/api/flights?${query.toString()}`);
+        const flights = await res.json();
+
+        if (!Array.isArray(flights) || flights.length === 0) {
+          container.innerHTML = `<div class="alert alert-warning">No flights found.</div>`;
+          return;
+        }
+
+        container.innerHTML = flights
+          .map(
+            (f) => `
+              <div class="card mb-3 shadow-sm">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                  <div>
+                    <h5 class="card-title mb-1">${f.flight_number}</h5>
+                    <p class="mb-0 text-muted">${f.origin_code} → ${f.destination_code}</p>
+                    <small>${f.flight_date} at ${f.depart_time}</small>
+                  </div>
+                  <div class="text-end">
+                    <h5 class="text-primary mb-1">฿${Number(f.price).toLocaleString()}</h5>
+                   <button class="btn btn-primary btn-sm" onclick="bookFlight('${f.id}')">Book</button>
+                  </div>
+                </div>
+              </div>
+            `
+          )
+          .join("");
+
+      } catch (err) {
+        console.error("Error fetching flights:", err);
+        container.innerHTML = `<div class="alert alert-danger">Failed to load flights from database.</div>`;
+      }
+    }
+
+    async function bookFlight(flightId) {
+      const passengerId = 1;
+      try {
+        const res = await fetch("/api/book", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ flight_id: flightId, passenger_id: passengerId })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          alert(`Booking successful!`);
+           window.location.href = "bookings.html";
+        } else {
+          alert(`Booking failed`);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Booking failed: Server error");
+      }
+    }
+  </script>
+</body>
+
+</html>
