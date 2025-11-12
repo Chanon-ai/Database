@@ -20,7 +20,7 @@
           <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
           <li class="nav-item"><a class="nav-link" href="flights.html">Flights</a></li>
           <li class="nav-item"><a class="nav-link active" href="bookings.html">Bookings</a></li>
-          <li class="nav-item"><a class="nav-link" href="payment.html">Payment (Mock)</a></li>
+          <!-- <li class="nav-item"><a class="nav-link" href="payment.html">Payment (Mock)</a></li> -->
         </ul>
       </div>
     </div>
@@ -39,13 +39,44 @@
     <div id="results" class="mt-2"></div>
   </main>
 
+  <!-- Booking Modal -->
+  <div class="modal fade" id="bookingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header">
+          <h5 class="modal-title" id="bookingModalTitle">Booking Status</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="bookingModalBody"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="bookingModalOkBtn" data-bs-dismiss="modal">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header">
+          <h5 class="modal-title" id="detailModalTitle"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="detailModalBody"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="detailBookBtn">Book</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <footer class="bg-light py-3 mt-auto">
     <div class="container text-center small">&copy; 2025 FlightBook</div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-
     document.addEventListener('DOMContentLoaded', () => {
       const params = new URLSearchParams(location.search);
       const origin = params.get('origin') || '';
@@ -53,6 +84,12 @@
       const date = params.get('date') || '';
       renderFlightsList({ origin, destination, date });
     });
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      if (isNaN(date)) return dateStr;
+      return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
 
     async function renderFlightsList({ origin, destination, date }) {
       const container = document.getElementById("results");
@@ -68,25 +105,25 @@
           return;
         }
 
-        container.innerHTML = flights
-          .map(
-            (f) => `
-              <div class="card mb-3 shadow-sm">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                  <div>
-                    <h5 class="card-title mb-1">${f.flight_number}</h5>
-                    <p class="mb-0 text-muted">${f.origin_code} → ${f.destination_code}</p>
-                    <small>${f.flight_date} at ${f.depart_time}</small>
-                  </div>
-                  <div class="text-end">
-                    <h5 class="text-primary mb-1">฿${Number(f.price).toLocaleString()}</h5>
-                   <button class="btn btn-primary btn-sm" onclick="bookFlight('${f.id}')">Book</button>
-                  </div>
-                </div>
+        container.innerHTML = flights.map(f => {
+          const flightDate = formatDate(f.flight_date);
+          return `
+          <div class="card mb-3 shadow-sm flight-card" onclick="showFlightDetail('${f.id}')">
+            <div class="card-body d-flex align-items-center gap-3">
+              <img src="${f.image}" alt="${f.flight_number}" class="flight-thumb">
+              <div class="flex-grow-1">
+                <h5 class="card-title mb-1">${f.flight_number}</h5>
+                <p class="mb-0 text-muted">${f.origin_code} → ${f.destination_code}</p>
+                <small>${flightDate} at ${f.depart_time}</small>
               </div>
-            `
-          )
-          .join("");
+              <div class="text-end">
+                <h5 class="text-primary mb-1">฿${Number(f.price).toLocaleString()}</h5>
+           <a href="booking.html?flight_id=${f.id}" class="btn btn-primary btn-sm" onclick="event.stopPropagation()">Book</a>
+              </div>
+            </div>
+          </div>
+          `;
+        }).join("");
 
       } catch (err) {
         console.error("Error fetching flights:", err);
@@ -94,28 +131,64 @@
       }
     }
 
-    async function bookFlight(flightId) {
-      const passengerId = 1;
-      try {
-        const res = await fetch("/api/book", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ flight_id: flightId, passenger_id: passengerId })
-        });
-        const data = await res.json();
+    let airportMap = {};
 
-        if (data.success) {
-          alert(`Booking successful!`);
-           window.location.href = "bookings.html";
-        } else {
-          alert(`Booking failed`);
-        }
+    async function loadAirports() {
+      try {
+        const res = await fetch('/api/airports');
+        const airports = await res.json();
+        airports.forEach(a => {
+          airportMap[a.code] = `${a.name} (${a.code})`;
+        });
       } catch (err) {
-        console.error(err);
-        alert("Booking failed: Server error");
+        console.error('Failed to load airports', err);
       }
     }
+
+
+    document.addEventListener('DOMContentLoaded', loadAirports);
+
+    async function showFlightDetail(flightId) {
+      try {
+        const res = await fetch(`/api/flights/${flightId}`);
+        const f = await res.json();
+
+        const flightDate = formatDate(f.flight_date);
+
+        document.getElementById('detailModalTitle').textContent = f.flight_number;
+        document.getElementById('detailModalBody').innerHTML = `
+      <div class="d-flex gap-3 align-items-center p-3" 
+           style="background-color:#f8f9fa; border:1px solid #dee2e6; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1);">
+        <img src="${f.image}" alt="${f.flight_number}" 
+             style="width:180px;height:200px;object-fit:cover;border-radius:12px;border:1px solid #ccc;">
+        <div style="flex:1;">
+          <p><strong>From:</strong> ${airportMap[f.origin_code] || f.origin_code}</p>
+          <p><strong>To:</strong> ${airportMap[f.destination_code] || f.destination_code}</p>
+          <p><strong>Date:</strong> ${flightDate}</p>
+          <p><strong>Departure Time:</strong> ${f.depart_time}</p>
+          <p><strong>Price:</strong> <span class="text-primary">฿${Number(f.price).toLocaleString()}</span></p>
+        </div>
+      </div>
+    `;
+
+        const detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
+
+        const detailBookBtn = document.getElementById('detailBookBtn');
+        detailBookBtn.onclick = () => {
+          window.location.href = `booking.html?flight_id=${f.id}`;
+        };
+
+        detailModal.show();
+      } catch (err) {
+        console.error("Error fetching flight detail:", err);
+        alert("Failed to load flight details.");
+      }
+    }
+
+
+
   </script>
 </body>
 
 </html>
+ไ

@@ -194,3 +194,19 @@ main {
         font-size: 0.95rem;
     }
 }
+
+.flight-card {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.flight-card:hover {
+    transform: scale(1.02);
+}
+
+.flight-thumb {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+}

@@ -10,11 +10,21 @@ app.use(express.static("public"));
 
 const pool = mysql.createPool({
   host: "localhost",
-  user: "root",    
-  password: "",       
+  user: "root",
+  password: "",
   database: "database", // ชื่อฐานข้อมูล
   connectionLimit: 10,
 }).promise();
+
+app.get("/api/airports", async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT * FROM airports ORDER BY city, name");
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch airports" });
+  }
+});
 
 
 app.get("/api/flights", async (req, res) => {
@@ -45,25 +55,59 @@ app.get("/api/flights", async (req, res) => {
   }
 });
 
+app.get("/api/flights/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [rows] = await pool.query("SELECT * FROM flights WHERE id = ?", [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Flight not found" });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch flight details" });
+  }
+});
 
 
 app.post("/api/book", async (req, res) => {
-  const { flight_id, passenger_id } = req.body;
+  const { flight_id, name, email, phone } = req.body;
 
-  if (!flight_id || !passenger_id) {
-    return res.status(400).json({ error: "Missing flight_id or passenger_id" });
+  if (!flight_id || !name || !email || !phone) {
+    return res.status(400).json({ error: "Missing data" });
   }
 
   try {
-    const [result] = await pool.query(
+    const [existing] = await pool.query("SELECT id FROM passengers WHERE email = ?", [email]);
+    let passengerId = existing.length ? existing[0].id : null;
+
+    if (!passengerId) {
+      const [pResult] = await pool.query(
+        "INSERT INTO passengers (first_name, last_name, email, phone) VALUES (?, ?, ?, ?)",
+        [name.split(" ")[0], name.split(" ").slice(1).join(" ") || "-", email, phone]
+      );
+      passengerId = pResult.insertId;
+    }
+
+    const [bResult] = await pool.query(
       "INSERT INTO bookings (flight_id, passenger_id) VALUES (?, ?)",
-      [flight_id, passenger_id]
+      [flight_id, passengerId]
+    );
+    const bookingId = bResult.insertId;
+
+    const [fResult] = await pool.query("SELECT price FROM flights WHERE id = ?", [flight_id]);
+    const price = fResult[0].price;
+
+    await pool.query(
+      "INSERT INTO payments (booking_id, amount, status) VALUES (?, ?, ?)",
+      [bookingId, price, "pending"]
     );
 
-    res.json({ success: true, bookingId: result.insertId });
+    res.json({ success: true, bookingId });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to create booking" });
+    res.status(500).json({ error: "Server error. Please try again." });
   }
 });
 
@@ -91,6 +135,17 @@ app.get("/api/bookings", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch bookings" });
+  }
+});
+
+
+app.delete("/api/bookings", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM bookings");
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to clear bookings" });
   }
 });
 
