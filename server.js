@@ -122,13 +122,18 @@ app.get("/api/bookings", async (req, res) => {
         f.flight_date,
         f.depart_time,
         f.price,
+        f.image,
         CONCAT(p.first_name, ' ', p.last_name) AS passenger,
         p.email,
         p.phone,
-        b.booking_date
+        b.booking_date,
+        pay.status AS payment_status,
+        pay.transaction_code,
+        pay.payment_date
       FROM bookings b
       JOIN flights f ON b.flight_id = f.id
       JOIN passengers p ON b.passenger_id = p.id
+      LEFT JOIN payments pay ON pay.booking_id = b.id
       ORDER BY b.booking_date DESC
     `);
     res.json(rows);
@@ -148,6 +153,30 @@ app.delete("/api/bookings", async (req, res) => {
     res.status(500).json({ error: "Failed to clear bookings" });
   }
 });
+
+
+app.post("/api/payment/confirm", async (req, res) => {
+  const { booking_id, transaction_code } = req.body;
+
+  if (!booking_id || !transaction_code) {
+    return res.status(400).json({ error: "Missing booking_id or transaction_code" });
+  }
+
+  try {
+    await pool.query(
+      `UPDATE payments 
+       SET status = ?, transaction_code = ?, payment_date = NOW()
+       WHERE booking_id = ?`,
+      ["paid", transaction_code, booking_id]
+    );
+
+    res.json({ success: true, message: "Payment confirmed" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to confirm payment" });
+  }
+});
+
 
 
 const PORT = 3000;

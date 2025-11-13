@@ -1,66 +1,185 @@
 <!doctype html>
 <html lang="th">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Booking Successful - FlightBook</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f8f9fa;
+    }
+
+    .card {
+      max-width: 720px;
+      margin: auto;
+      border-radius: 12px;
+    }
+
+    .section {
+      margin-bottom: 1.5rem;
+    }
+
+    .label {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .value {
+      color: #555;
+    }
+
+    .badge-paid {
+      background-color: #28a745;
+    }
+
+    .badge-pending {
+      background-color: #ffc107;
+      color: #212529;
+    }
+
+    .badge-failed {
+      background-color: #dc3545;
+    }
+
+    .flight-thumb {
+      width: 150px;
+      height: auto;
+      border-radius: 8px;
+      margin-right: 1rem;
+    }
+
+    .flex-row {
+      display: flex;
+      align-items: center;
+    }
+
+    .btn {
+      background-color: #145ac4;
+      color: white;
+      border: none;
+    }
+
+    .btn:hover {
+      background-color: #0b5ed7;
+    }
+  </style>
 </head>
+
 <body>
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container">
-      <a class="navbar-brand" href="index.html">FlightBook</a>
+      <a class="navbar-brand" href="index.html">
+        <h4>FlightBook</h4>
+      </a>
+    </div>
+    <div class="text-center">
+      <a href="index.html" class="btn me-2">Back to Home</a>
     </div>
   </nav>
 
   <main class="container py-5">
     <div class="text-center mb-4">
-      <h2>Booking successful — Thank you for using our service</h2>
+      <h2 class="fw-bold">Booking Successful ✅</h2>
+      <p class="text-muted">Thank you for using our service</p>
     </div>
+
     <div id="bookingInfo"></div>
-    <div class="mt-4">
-  <a href="index.html" class="btn btn-primary">Back to Home</a>
-    </div>
   </main>
 
   <footer class="bg-light py-3 mt-auto">
     <div class="container text-center small">&copy; 2025 FlightBook</div>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="script.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const last = JSON.parse(localStorage.getItem('lastBooking') || 'null');
-      if (!last) {
-    document.getElementById('bookingInfo').innerHTML = '<div class="alert alert-warning">No booking data found</div>';
+    document.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search);
+      const bookingId = params.get('booking_id');
+      const container = document.getElementById('bookingInfo');
+
+      if (!bookingId) {
+        container.innerHTML = '<div class="alert alert-warning">No booking data found</div>';
         return;
       }
-      const flight = getFlightById(last.flight.id) || last.flight;
-      document.getElementById('bookingInfo').innerHTML = `
-        <div class="card">
-          <div class="card-body">
-            <div class="d-flex gap-3 align-items-center">
-              <img src="${flight.image}" class="flight-thumb" alt="${flight.flightNumber}">
+
+      container.innerHTML = `<p class="text-center text-muted">Loading booking...</p>`;
+
+      try {
+        const res = await fetch('/api/bookings');
+        const bookings = await res.json();
+        const booking = bookings.find(b => b.booking_id == bookingId);
+
+        if (!booking) {
+          container.innerHTML = '<div class="alert alert-warning">Booking not found</div>';
+          return;
+        }
+
+        function formatDate(dateStr) {
+          const date = new Date(dateStr);
+          if (isNaN(date)) return dateStr;
+          return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+
+
+        const formatPaymentDate = (dateStr, timeStr) => {
+          if (!dateStr) return '-';
+          const isoStr = timeStr ? `${dateStr}T${timeStr}` : dateStr;
+          const d = new Date(isoStr);
+
+          if (isNaN(d)) return '-';
+
+          return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
+            d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        }
+        const statusBadge = (status) => {
+          switch (status?.toLowerCase()) {
+            case 'paid': return `<span class="badge badge-paid">Paid</span>`;
+            case 'pending': return `<span class="badge badge-pending">Pending</span>`;
+            case 'failed': return `<span class="badge badge-failed">Failed</span>`;
+            default: return `<span class="badge bg-secondary">${status || '-'}</span>`;
+          }
+        }
+
+        container.innerHTML = `
+          <div class="card shadow-sm p-4">
+            <div class="section flex-row mb-3">
+              <img src="${booking.image || 'img/QR.jpg'}" class="flight-thumb" alt="Flight">
               <div>
-                <h5 class="card-title">Flight information</h5>
-                <p class="mb-1">${flight.flightNumber} — ${flight.origin} → ${flight.destination}</p>
-                <p class="mb-0">Departure: ${flight.time} | Price: ฿${flight.price}</p>
+                <div><span class="label">Flight:</span> <span class="value">${booking.flight_number} (${booking.route})</span></div>
+    <div>
+  <span class="label">Departure:</span> 
+  <span class="value">${formatDate(booking.flight_date)} <strong>Time:</strong> ${booking.depart_time}</span>
+</div>
+
+                <div><span class="label">Price:</span> <span class="value">฿${Number(booking.price).toLocaleString()}</span></div>
               </div>
             </div>
-            <hr>
-            <h5 class="mt-3">Passenger information</h5>
-            <p>Name: ${last.passenger.name}</p>
-            <p>Email: ${last.passenger.email}</p>
-            <p>Phone: ${last.passenger.phone}</p>
-            <p class="text-muted small">Booking reference: <strong>${last.id}</strong></p>
+
+            <div class="section">
+              <div><span class="label">Passenger:</span> <span class="value">${booking.passenger}</span></div>
+              <div><span class="label">Email:</span> <span class="value">${booking.email}</span></div>
+              <div><span class="label">Phone:</span> <span class="value">${booking.phone}</span></div>
+              <div><span class="label">Booking Ref:</span> <span class="value">${booking.booking_id}</span></div>
+            </div>
+
+            <div class="section">
+              <div><span class="label">Payment Status:</span> ${statusBadge(booking.payment_status)}</div>
+              <div><span class="label">Transaction Code:</span> <span class="value">${booking.transaction_code || '-'}</span></div>
+              <div><span class="label">Payment Date:</span> <span class="value">${formatPaymentDate(booking.payment_date)}</span></div>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = '<div class="alert alert-danger">Failed to load booking info</div>';
+      }
     });
   </script>
 </body>
+
 </html>

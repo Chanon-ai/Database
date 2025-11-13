@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 12, 2025 at 09:17 AM
+-- Generation Time: Nov 13, 2025 at 03:52 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -72,7 +72,7 @@ CREATE TABLE `bookings` (
 --
 
 INSERT INTO `bookings` (`id`, `flight_id`, `passenger_id`, `booking_date`) VALUES
-(36, 'F001', 2, '2025-11-12 15:17:04');
+(40, 'F001', 15, '2025-11-13 21:50:29');
 
 -- --------------------------------------------------------
 
@@ -86,7 +86,7 @@ CREATE TABLE `flights` (
   `origin_code` varchar(3) NOT NULL,
   `destination_code` varchar(3) NOT NULL,
   `flight_date` date NOT NULL,
-  `depart_time` varchar(10) NOT NULL,
+  `depart_time` time NOT NULL,
   `price` int(11) NOT NULL,
   `image` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -96,16 +96,16 @@ CREATE TABLE `flights` (
 --
 
 INSERT INTO `flights` (`id`, `flight_number`, `origin_code`, `destination_code`, `flight_date`, `depart_time`, `price`, `image`) VALUES
-('F001', 'FD1001', 'BKK', 'CNX', '2025-11-20', '09:30', 1500, 'img/01.jpg'),
-('F002', 'FD1002', 'DMK', 'HKT', '2025-11-20', '11:00', 2200, 'img/02.jpg'),
-('F003', 'FD1003', 'CNX', 'BKK', '2025-11-21', '14:15', 1400, 'img/03.jpg'),
-('F004', 'FD1004', 'BKK', 'USM', '2025-11-22', '07:00', 2000, 'img/04.jpg'),
-('F005', 'FD2001', 'DMK', 'KUL', '2025-11-20', '20:45', 2700, 'img/05.jpg'),
-('F006', 'FD2002', 'BKK', 'SIN', '2025-11-25', '16:00', 3500, 'img/01.jpg'),
-('F007', 'FD2003', 'HKT', 'HAN', '2025-11-28', '10:30', 3900, 'img/02.jpg'),
-('F008', 'FD3001', 'BKK', 'TPE', '2025-12-01', '01:00', 5800, 'img/03.jpg'),
-('F009', 'FD3002', 'ICN', 'BKK', '2025-12-05', '18:30', 7200, 'img/04.jpg'),
-('F010', 'FD3003', 'CNX', 'SGN', '2025-11-27', '13:50', 4100, 'img/05.jpg');
+('F001', 'FD1001', 'BKK', 'CNX', '2025-11-20', '09:30:00', 1500, 'img/01.jpg'),
+('F002', 'FD1002', 'DMK', 'HKT', '2025-11-20', '11:00:00', 2200, 'img/02.jpg'),
+('F003', 'FD1003', 'CNX', 'BKK', '2025-11-21', '14:15:00', 1400, 'img/03.jpg'),
+('F004', 'FD1004', 'BKK', 'USM', '2025-11-22', '07:00:00', 2000, 'img/04.jpg'),
+('F005', 'FD2001', 'DMK', 'KUL', '2025-11-20', '20:45:00', 2700, 'img/05.jpg'),
+('F006', 'FD2002', 'BKK', 'SIN', '2025-11-25', '16:00:00', 3500, 'img/01.jpg'),
+('F007', 'FD2003', 'HKT', 'HAN', '2025-11-28', '10:30:00', 3900, 'img/02.jpg'),
+('F008', 'FD3001', 'BKK', 'TPE', '2025-12-01', '01:00:00', 5800, 'img/03.jpg'),
+('F009', 'FD3002', 'ICN', 'BKK', '2025-12-05', '18:30:00', 7200, 'img/04.jpg'),
+('F010', 'FD3003', 'CNX', 'SGN', '2025-11-27', '13:50:00', 4100, 'img/05.jpg');
 
 -- --------------------------------------------------------
 
@@ -126,9 +126,7 @@ CREATE TABLE `passengers` (
 --
 
 INSERT INTO `passengers` (`id`, `first_name`, `last_name`, `email`, `phone`) VALUES
-(2, 'a', '', 'asdasd@asdsa', 'ๅ'),
-(9, 'min', 'nieeeeee', 'asdasd@asdsas', '099'),
-(11, 'min', 'nieeeeee', 'asdasd@asdsass', '099');
+(15, 'min', 'nieeeeee', 'minnie@gmail.com', '0987654321');
 
 -- --------------------------------------------------------
 
@@ -141,17 +139,16 @@ CREATE TABLE `payments` (
   `booking_id` int(11) NOT NULL,
   `amount` decimal(10,2) NOT NULL,
   `status` varchar(20) NOT NULL,
-  `method` varchar(50) DEFAULT NULL,
   `transaction_code` varchar(100) DEFAULT NULL,
-  `payment_date` datetime DEFAULT current_timestamp()
+  `payment_date` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `payments`
 --
 
-INSERT INTO `payments` (`id`, `booking_id`, `amount`, `status`, `method`, `transaction_code`, `payment_date`) VALUES
-(7, 36, 1500.00, 'pending', NULL, NULL, '2025-11-12 15:17:04');
+INSERT INTO `payments` (`id`, `booking_id`, `amount`, `status`, `transaction_code`, `payment_date`) VALUES
+(13, 40, 1500.00, 'paid', '56848964', '2025-11-13 21:50:35');
 
 --
 -- Indexes for dumped tables
@@ -201,19 +198,19 @@ ALTER TABLE `payments`
 -- AUTO_INCREMENT for table `bookings`
 --
 ALTER TABLE `bookings`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `passengers`
 --
 ALTER TABLE `passengers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- Constraints for dumped tables
