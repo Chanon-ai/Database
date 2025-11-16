@@ -12,7 +12,7 @@ const pool = mysql.createPool({
   host: "localhost",
   user: "root",
   password: "",
-  database: "database", // ชื่อฐานข้อมูล
+  database: "minnie", // ชื่อฐานข้อมูล
   connectionLimit: 10,
 }).promise();
 
