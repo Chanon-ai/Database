@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Booking - FlightBook</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .flight-thumb {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand" href="index.html"><h4>FlightBook</h4></a>
+      <div class="collapse navbar-collapse" id="navMain">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="flights.html">Flights</a></li>
+          <li class="nav-item"><a class="nav-link active" href="bookings.html">Bookings</a></li>
+          <!-- <li class="nav-item"><a class="nav-link" href="payment.html">Payment (Mock)</a></li> -->
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container py-5">
+    <h2>Booking Details</h2>
+    <div id="flightSummary" class="mb-4"></div>
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Passenger Information</h5>
+        <form id="bookingForm">
+          <div class="mb-3">
+            <label class="form-label">Full name</label>
+            <input id="passengerName" type="text" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input id="passengerEmail" type="email" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Phone</label>
+            <input id="passengerPhone" type="tel" class="form-control" required>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success">Confirm Booking</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-light py-3 mt-auto">
+    <div class="container text-center small">&copy; 2025 FlightBook</div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let airportMap = {};
+
+    async function loadAirports() {
+      try {
+        const res = await fetch('/api/airports');
+        const airports = await res.json();
+        airports.forEach(a => {
+          airportMap[a.code] = `${a.name} (${a.code})`;
+        });
+      } catch (err) {
+        console.error('Failed to load airports', err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadAirports();
+
+      const params = new URLSearchParams(location.search);
+      const fid = params.get('flight_id');
+
+      if (!fid) {
+        document.getElementById('flightSummary').innerHTML =
+          '<div class="alert alert-warning">Flight not found — please go back and select a flight</div>';
+        document.getElementById('bookingForm').style.display = 'none';
+        return;
+      }
+
+      let flight = null;
+      try {
+        const res = await fetch(`/api/flights/${fid}`);
+        if (!res.ok) throw new Error('Flight not found');
+        flight = await res.json();
+      } catch (err) {
+        console.error(err);
+        document.getElementById('flightSummary').innerHTML =
+          '<div class="alert alert-warning">Flight not found — please go back and select a flight</div>';
+        document.getElementById('bookingForm').style.display = 'none';
+        return;
+      }
+
+      const originFull = airportMap[flight.origin_code] || flight.origin_code;
+      const destinationFull = airportMap[flight.destination_code] || flight.destination_code;
+
+      document.getElementById('flightSummary').innerHTML = `
+    <div class="border p-3 d-flex align-items-center gap-3">
+      <img src="${flight.image}" class="flight-thumb" alt="${flight.flight_number}">
+      <div>
+        <strong>${flight.flight_number}</strong> — ${originFull} → ${destinationFull}<br>
+        Departure: ${flight.depart_time} &nbsp; | &nbsp; Price: ฿${Number(flight.price).toLocaleString()}
+      </div>
+    </div>
+  `;
+
+      const form = document.getElementById('bookingForm');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('passengerName').value.trim();
+        const email = document.getElementById('passengerEmail').value.trim();
+        const phone = document.getElementById('passengerPhone').value.trim();
+
+        try {
+          const res = await fetch('/api/book', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ flight_id: fid, name, email, phone })
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            const params = new URLSearchParams();
+            params.set('booking_id', data.bookingId);
+            window.location.href = `payment.html?${params.toString()}`;
+          }
+          else {
+            alert(data.error || 'Booking failed');
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Server error. Please try again.');
+        }
+      });
+
+    });
+
+  </script>
+</body>
+
+</html>
