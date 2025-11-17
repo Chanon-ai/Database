@@ -109,9 +109,8 @@
       container.innerHTML = `<p class="text-center text-muted">Loading booking...</p>`;
 
       try {
-        const res = await fetch('/api/bookings');
-        const bookings = await res.json();
-        const booking = bookings.find(b => b.booking_id == bookingId);
+        const res = await fetch('/api/bookings/latest');
+        const booking = await res.json();
 
         if (!booking) {
           container.innerHTML = '<div class="alert alert-warning">Booking not found</div>';
