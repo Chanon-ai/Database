@@ -50,15 +50,14 @@
       }
 
       try {
-        const res = await fetch('/api/bookings');
-        const bookings = await res.json();
+        const res = await fetch('/api/bookings/latest');
+        const latest = await res.json();
 
-        if (!bookings.length) {
+        if (!latest) {
           container.innerHTML = `<p class="text-warning">No booking found</p>`;
           return;
         }
 
-        const latest = bookings[0];
 
         container.innerHTML = `
       <div class="border p-4 bg-light rounded shadow-sm">

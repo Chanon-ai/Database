@@ -12,7 +12,7 @@ const pool = mysql.createPool({
   host: "localhost",
   user: "root",
   password: "",
-  database: "database4", 
+  database: "minnie", 
   connectionLimit: 10,
 }).promise();
 
@@ -112,7 +112,7 @@ app.post("/api/book", async (req, res) => {
 });
 
 
-app.get("/api/bookings", async (req, res) => {
+app.get("/api/bookings/latest", async (req, res) => {
   try {
     const [rows] = await pool.query(`
       SELECT 
@@ -134,14 +134,22 @@ app.get("/api/bookings", async (req, res) => {
       JOIN flights f ON b.flight_id = f.id
       JOIN passengers p ON b.passenger_id = p.id
       LEFT JOIN payments pay ON pay.booking_id = b.id
-      ORDER BY b.booking_date DESC
+      ORDER BY b.id DESC
+      LIMIT 1
     `);
-    res.json(rows);
+
+    if (!rows.length) {
+      return res.json(null);
+    }
+
+    res.json(rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to fetch bookings" });
+    res.status(500).json({ error: "Failed to fetch latest booking" });
   }
 });
+
+
 
 
 app.delete("/api/bookings", async (req, res) => {
