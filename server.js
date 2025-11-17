@@ -7,12 +7,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-
 const pool = mysql.createPool({
   host: "localhost",
   user: "root",
   password: "",
-  database: "database4", 
+  database: "minnie", 
   connectionLimit: 10,
 }).promise();
 
@@ -150,7 +149,36 @@ app.get("/api/bookings/latest", async (req, res) => {
 });
 
 
-
+app.get("/api/bookings", async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        b.id AS booking_id,
+        f.flight_number,
+        CONCAT(f.origin_code, ' → ', f.destination_code) AS route,
+        f.flight_date,
+        f.depart_time,
+        f.price,
+        f.image,
+        CONCAT(p.first_name, ' ', p.last_name) AS passenger,
+        p.email,
+        p.phone,
+        b.booking_date,
+        pay.status AS payment_status,
+        pay.transaction_code,
+        pay.payment_date
+      FROM bookings b
+      JOIN flights f ON b.flight_id = f.id
+      JOIN passengers p ON b.passenger_id = p.id
+      LEFT JOIN payments pay ON pay.booking_id = b.id
+      ORDER BY b.booking_date DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch bookings" });
+  }
+});
 
 app.delete("/api/bookings", async (req, res) => {
   try {
