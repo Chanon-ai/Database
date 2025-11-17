@@ -9,45 +9,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    /* Navbar gradient + shadow */
-    nav.navbar {
-      background: linear-gradient(90deg, #145ac4, #1c7ed6);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .navbar-brand h4 {
-      font-weight: 700;
-      color: #fff;
-      letter-spacing: 1px;
-    }
-
-    .navbar .btn {
-      border-radius: 8px;
-      font-weight: 600;
-      transition: all 0.3s;
-    }
-
-    .navbar .btn:hover {
-      background-color: #0b5ed7;
-      color: #fff;
-    }
-
     body {
       font-family: 'Inter', sans-serif;
-      background: #f4f6f9;
+      background: #f8f9fa;
     }
 
     .card {
-      border-radius: 16px;
-      padding: 2rem;
-      background: #fff;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+      max-width: 720px;
+      margin: auto;
+      border-radius: 12px;
     }
 
     .section {
@@ -63,36 +33,34 @@
       color: #555;
     }
 
-    .badge-paid {
-      background-color: #198754;
-      color: #fff;
-      font-weight: 500;
-      padding: 0.4em 0.7em;
-      border-radius: 0.5rem;
-    }
+ .badge-paid {
+    background-color: #198754;
+    color: #fff;
+    font-weight: 500;
+    padding: 0.4em 0.7em;
+    border-radius: 0.5rem;
+  }
 
-    .badge-pending {
-      background-color: #ffc107;
-      color: #212529;
-      font-weight: 500;
-      padding: 0.4em 0.7em;
-      border-radius: 0.5rem;
-    }
+  .badge-pending {
+    background-color: #ffc107;
+    color: #212529;
+    font-weight: 500;
+    padding: 0.4em 0.7em;
+    border-radius: 0.5rem;
+  }
 
-    .badge-failed {
-      background-color: #dc3545;
-      color: #fff;
-      font-weight: 500;
-      padding: 0.4em 0.7em;
-      border-radius: 0.5rem;
-    }
-
+  .badge-failed {
+    background-color: #dc3545;
+    color: #fff;
+    font-weight: 500;
+    padding: 0.4em 0.7em;
+    border-radius: 0.5rem;
+  }
     .flight-thumb {
       width: 150px;
       height: auto;
-      border-radius: 12px;
+      border-radius: 8px;
       margin-right: 1rem;
-      object-fit: cover;
     }
 
     .flex-row {
@@ -100,36 +68,16 @@
       align-items: center;
     }
 
-    .btn-primary {
+    .btn {
       background-color: #145ac4;
-      border-radius: 8px;
-      font-weight: 600;
-      transition: all 0.3s;
+      color: white;
+      border: none;
     }
 
-    .btn-primary:hover {
+    .btn:hover {
       background-color: #0b5ed7;
     }
-
-    footer {
-      background: #f8f9fa;
-      font-size: 0.875rem;
-      padding: 1rem 0;
-    }
-
-    @media(max-width: 576px) {
-      .flex-row {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .flight-thumb {
-        width: 100%;
-        margin-bottom: 1rem;
-      }
-    }
   </style>
-
 </head>
 
 <body>

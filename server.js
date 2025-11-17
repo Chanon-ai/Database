@@ -11,7 +11,7 @@ const pool = mysql.createPool({
   host: "localhost",
   user: "root",
   password: "",
-  database: "database4", 
+  database: "minnie", 
   connectionLimit: 10,
 }).promise();
 
